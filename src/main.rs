@@ -36,17 +36,17 @@ enum Op1 {
 #[derive(Debug)]
 enum Op2 {
     Plus,
-    Times,
     Minus,
+    Times,
 }
 
 #[derive(Debug)]
 enum Expr {
-    Num(i32),
-    Let(Vec<(String, Expr)>, Box<Expr>),
+    Number(i32),
     Id(String),
-    Add1(Box<Expr>),
-    Sub1(Box<Expr>),
+    Let(Vec<(String, Expr)>, Box<Expr>),
+    UnOp(Op1, Box<Expr>),
+    BinOp(Op2, Box<Expr>, Box<Expr>),
 }
 
 fn main() -> std::io::Result<()> {
