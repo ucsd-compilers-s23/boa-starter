@@ -1,4 +1,3 @@
-
 UNAME := $(shell uname)
 
 ifeq ($(UNAME), Linux)
@@ -8,11 +7,14 @@ ifeq ($(UNAME), Darwin)
 ARCH := macho64
 endif
 
-test/%.s: test/%.snek src/main.rs
-	cargo run -- $< test/$*.s
+.PHONY: test
+test:
+	cargo test -- --test-threads=1
 
-test/%.run: test/%.s runtime/start.rs
-	nasm -f $(ARCH) test/$*.s -o runtime/our_code.o
+tests/%.s: tests/%.snek src/main.rs
+	cargo run -- $< tests/$*.s
+
+tests/%.run: tests/%.s runtime/start.rs
+	nasm -f $(ARCH) tests/$*.s -o runtime/our_code.o
 	ar rcs runtime/libour_code.a runtime/our_code.o
-	rustc -L runtime/ runtime/start.rs -o test/$*.run
-
+	rustc -L runtime/ runtime/start.rs -o tests/$*.run

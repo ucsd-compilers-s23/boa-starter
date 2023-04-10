@@ -1,5 +1,5 @@
 [package]
-name = "boa-starter"
+name = "boa"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,3 +8,6 @@ edition = "2021"
 [dependencies]
 im = "15.1.0"
 sexp = "1.1.4"
+
+[dev-dependencies]
+prettydiff = "0.6.4"
