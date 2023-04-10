@@ -1,4 +1,7 @@
-use std::process::Command;
+use std::{
+    path::{Path, PathBuf},
+    process::Command,
+};
 
 #[macro_export]
 macro_rules! success_tests {
@@ -12,57 +15,58 @@ macro_rules! success_tests {
     }
 }
 #[macro_export]
-macro_rules! error_tests {
+macro_rules! failure_tests {
     ($($name:ident: $expected:literal,)*) => {
         $(
         #[test]
         fn $name() {
-            $crate::infra::run_error_test(stringify!($name), $expected);
+            $crate::infra::run_failure_test(stringify!($name), $expected);
         }
         )*
     }
 }
 
 fn compile(name: &str) -> Result<(), String> {
-    let prog_name = format!("tests/{name}.snek");
-    let asm_name = format!("tests/{name}.s");
-    let exe_name = format!("tests/{name}.run");
-
-    // Compile the compiler
+    // Build the project
     let status = Command::new("cargo")
         .arg("build")
         .status()
-        .expect("Could not run Cargo");
-    assert!(status.success(), "Compiling the compiler failed");
+        .expect("could not run cargo");
+    assert!(status.success(), "could not build the project");
 
     // Run the compiler
-    let output = Command::new("target/debug/boa")
-        .arg(&prog_name)
-        .arg(&asm_name)
+    let boa: PathBuf = ["target", "debug", "boa"].iter().collect();
+    let output = Command::new(&boa)
+        .arg(&mk_path(name, Ext::Snek))
+        .arg(&mk_path(name, Ext::Asm))
         .output()
-        .expect("Could not run the compiler");
+        .expect("could not run the compiler");
     if !output.status.success() {
         return Err(String::from_utf8(output.stderr).unwrap());
     }
 
     // Assemble and link
-    let status = Command::new("make")
-        .arg(&exe_name)
-        .status()
-        .expect("Could not run make");
-    assert!(status.success(), "Linking failed");
+    let output = Command::new("make")
+        .arg(&mk_path(name, Ext::Run))
+        .output()
+        .expect("could not run make");
+    assert!(output.status.success(), "linking failed");
 
     Ok(())
 }
 
 pub(crate) fn run_success_test(name: &str, expected: &str) {
-    compile(name).expect("There was a compiler error");
+    if let Err(err) = compile(name) {
+        panic!(
+            "expected a successful compilation, but got an error: `{}`",
+            err
+        );
+    }
 
-    let exe_name = format!("tests/{name}.run");
-    let output = Command::new(&exe_name).output().unwrap();
+    let output = Command::new(&mk_path(name, Ext::Run)).output().unwrap();
     assert!(
         output.status.success(),
-        "Running the compiled program had an error: {}",
+        "unexpected error when running the compiled program: `{}`",
         std::str::from_utf8(&output.stderr).unwrap(),
     );
     let actual_output = String::from_utf8(output.stdout).unwrap();
@@ -70,19 +74,40 @@ pub(crate) fn run_success_test(name: &str, expected: &str) {
     let expected_output = expected.trim();
     if expected_output != actual_output {
         eprintln!(
-            "Output differed!\n{}",
+            "output differed!\n{}",
             prettydiff::diff_lines(actual_output, expected_output)
         );
-        panic!("Test failed");
+        panic!("test failed");
     }
 }
 
-pub(crate) fn run_error_test(name: &str, expected: &str) {
+pub(crate) fn run_failure_test(name: &str, expected: &str) {
     let Err(actual_err) = compile(name) else {
-        panic!("Expected a failure, but compilation succeeded");
+        panic!("expected a failure, but compilation succeeded");
     };
     assert!(
         actual_err.contains(expected.trim()),
-        "The reported error message does not match",
+        "the reported error message does not match",
     );
+}
+
+fn mk_path(name: &str, ext: Ext) -> PathBuf {
+    Path::new("tests").join(format!("{name}.{ext}"))
+}
+
+#[derive(Copy, Clone)]
+enum Ext {
+    Snek,
+    Asm,
+    Run,
+}
+
+impl std::fmt::Display for Ext {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Ext::Snek => write!(f, "snek"),
+            Ext::Asm => write!(f, "s"),
+            Ext::Run => write!(f, "run"),
+        }
+    }
 }

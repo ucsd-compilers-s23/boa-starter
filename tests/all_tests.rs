@@ -4,6 +4,6 @@ mod infra;
 success_tests! {
     add1: "73",
 }
-error_tests! {
+failure_tests! {
     bad_syntax: "syntax error",
 }
