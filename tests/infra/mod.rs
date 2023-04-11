@@ -5,7 +5,7 @@ use std::{
 
 #[macro_export]
 macro_rules! success_tests {
-    ($($name:ident: $expected:literal,)*) => {
+    ($($name:ident: $expected:literal),* $(,)?) => {
         $(
         #[test]
         fn $name() {
@@ -16,7 +16,7 @@ macro_rules! success_tests {
 }
 #[macro_export]
 macro_rules! failure_tests {
-    ($($name:ident: $expected:literal,)*) => {
+    ($($name:ident: $expected:literal),* $(,)?) => {
         $(
         #[test]
         fn $name() {
