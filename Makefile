@@ -11,6 +11,6 @@ tests/%.s: tests/%.snek src/main.rs
 	cargo run -- $< tests/$*.s
 
 tests/%.run: tests/%.s runtime/start.rs
-	nasm -f $(ARCH) tests/$*.s -o runtime/%s.o
-	ar rcs runtime/libour_code.a runtime/%s.o
+	nasm -f $(ARCH) tests/$*.s -o runtime/$*.o
+	ar rcs runtime/$*.a runtime/$*.o
 	rustc -L runtime/ runtime/start.rs -o tests/$*.run
