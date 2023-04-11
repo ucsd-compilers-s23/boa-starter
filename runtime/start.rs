@@ -8,8 +8,6 @@ extern "C" {
 }
 
 fn main() {
-  let i : i64 = unsafe {
-    our_code_starts_here()
-  };
-  println!("{i}");
+    let i: i64 = unsafe { our_code_starts_here() };
+    println!("{i}");
 }

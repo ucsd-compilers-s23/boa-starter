@@ -12,5 +12,5 @@ tests/%.s: tests/%.snek src/main.rs
 
 tests/%.run: tests/%.s runtime/start.rs
 	nasm -f $(ARCH) tests/$*.s -o runtime/$*.o
-	ar rcs runtime/$*.a runtime/$*.o
-	rustc -L runtime/ runtime/start.rs -o tests/$*.run
+	ar rcs runtime/lib$*.a runtime/$*.o
+	rustc -L runtime/ -lour_code:$* runtime/start.rs -o tests/$*.run
